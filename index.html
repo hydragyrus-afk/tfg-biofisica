@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f2e9">
+  <title>Cuaderno de biofísica · TFG</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="paper-grain"></div>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Inicio">
+      <span class="brand-mark">β</span>
+      <span><strong>CUADERNO DE BIOFÍSICA</strong><small>TFG · adhesión celular en capilares</small></span>
+    </a>
+    <div class="top-actions">
+      <span class="cloud-status" id="cloudStatus"><i></i> Sin conectar</span>
+      <button class="button button-quiet" id="signOutBtn" hidden>Cerrar sesión</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="authScreen" class="auth-layout">
+      <div class="auth-copy">
+        <p class="eyebrow">CUADERNO DE LABORATORIO · 01</p>
+        <h1>Una idea clara.<br><em>Un modelo defendible.</em></h1>
+        <p class="lead">Tu espacio de trabajo para convertir bibliografía, física y simulaciones en una memoria de TFG coherente.</p>
+        <div class="mini-notes">
+          <div><span class="note-number">01</span><span>Comprender el sistema</span></div>
+          <div><span class="note-number">02</span><span>Justificar las aproximaciones</span></div>
+          <div><span class="note-number">03</span><span>Simular e interpretar</span></div>
+        </div>
+      </div>
+      <div class="auth-card">
+        <div class="tab-row"><button class="auth-tab active" data-auth-tab="login">Entrar</button><button class="auth-tab" data-auth-tab="signup">Crear cuenta</button></div>
+        <div id="configWarning" class="notice warning" hidden></div>
+        <form id="authForm">
+          <label for="email">Correo electrónico</label>
+          <input id="email" type="email" autocomplete="email" placeholder="tu@correo.com" required>
+          <label for="password">Contraseña</label>
+          <input id="password" type="password" autocomplete="current-password" minlength="8" placeholder="Mínimo 8 caracteres" required>
+          <button class="button button-primary full" id="authSubmit" type="submit">Entrar en mi cuaderno <span>↗</span></button>
+          <p class="form-message" id="authMessage" aria-live="polite"></p>
+        </form>
+        <p class="small-muted">Los datos se guardan en tu proyecto privado de Supabase y se asocian a tu cuenta.</p>
+      </div>
+    </section>
+
+    <section id="appScreen" hidden>
+      <div class="welcome-row">
+        <div><p class="eyebrow" id="todayLabel">CUADERNO · SEGUIMIENTO</p><h1>El trabajo, <em>en movimiento.</em></h1><p class="lead compact">Un mapa de lo que sabes, lo que estás construyendo y lo que falta por demostrar.</p></div>
+        <button class="button button-primary" id="quickAddBtn">＋ Nueva tarea</button>
+      </div>
+
+      <nav class="main-nav" aria-label="Secciones">
+        <button class="nav-item active" data-view="dashboard"><span>◫</span> Resumen</button>
+        <button class="nav-item" data-view="topics"><span>⌘</span> Mapa científico</button>
+        <button class="nav-item" data-view="tasks"><span>☷</span> Tareas <b id="taskNavCount">0</b></button>
+        <button class="nav-item" data-view="library"><span>▤</span> Bibliografía</button>
+        <button class="nav-item" data-view="simulations"><span>∿</span> Simulaciones</button>
+      </nav>
+
+      <section class="view active" id="view-dashboard">
+        <div class="stats-grid">
+          <article class="stat-card stat-main"><span class="stat-label">PROGRESO DEL TFG</span><div class="stat-value"><strong id="overallProgress">0</strong><span>%</span></div><div class="progress-track"><span id="overallBar"></span></div><p id="progressCaption">Tu avance se calcula a partir de las tareas completadas.</p></article>
+          <article class="stat-card"><span class="stat-label">TAREAS ABIERTAS</span><div class="stat-value"><strong id="openTasks">0</strong></div><p>Trabajo todavía por cerrar</p><span class="stat-doodle">↗</span></article>
+          <article class="stat-card"><span class="stat-label">TEMAS CONSOLIDADOS</span><div class="stat-value"><strong id="masteredTopics">0</strong><small id="topicTotal">/ 15</small></div><p>Comprendidos y explicables</p><span class="stat-doodle">∴</span></article>
+          <article class="stat-card"><span class="stat-label">SIMULACIONES</span><div class="stat-value"><strong id="simulationCount">0</strong></div><p>Modelos registrados</p><span class="stat-doodle">∿</span></article>
+        </div>
+        <div class="dashboard-grid">
+          <article class="panel">
+            <div class="panel-heading"><div><p class="eyebrow">PLAN DE TRABAJO</p><h2>Próximos pasos</h2></div><button class="text-button" data-go="tasks">Ver todas ↗</button></div>
+            <div id="nextTasks" class="task-preview-list"></div>
+          </article>
+          <article class="panel phase-panel">
+            <div class="panel-heading"><div><p class="eyebrow">VISTA GLOBAL</p><h2>Fases del trabajo</h2></div></div>
+            <div id="phaseProgress" class="phase-list"></div>
+          </article>
+        </div>
+        <div class="quote-strip"><span class="quote-mark">“</span><p>Una aproximación no es una simplificación gratuita: es una hipótesis que debe poder defenderse.</p><span class="quote-credit">NOTA DE MÉTODO</span></div>
+      </section>
+
+      <section class="view" id="view-topics">
+        <div class="section-intro"><div><p class="eyebrow">01 · CONTENIDO</p><h2>Mapa científico</h2><p>Registra no solo si has leído un tema, sino si puedes explicarlo y utilizarlo.</p></div><div class="legend"><span><i class="dot dot-grey"></i> Pendiente</span><span><i class="dot dot-amber"></i> En curso</span><span><i class="dot dot-green"></i> Consolidado</span></div></div>
+        <div id="topicGroups" class="topic-groups"></div>
+      </section>
+
+      <section class="view" id="view-tasks">
+        <div class="section-intro"><div><p class="eyebrow">02 · EJECUCIÓN</p><h2>Lista de trabajo</h2><p>Convierte cada fase en una acción verificable y concreta.</p></div><button class="button button-primary" id="addTaskBtn">＋ Añadir tarea</button></div>
+        <div class="filter-row"><input id="taskSearch" type="search" placeholder="Buscar tarea, tema o nota…"><select id="taskFilter"><option value="all">Todos los estados</option><option value="todo">Pendientes</option><option value="doing">En curso</option><option value="done">Completadas</option><option value="blocked">Bloqueadas</option></select><select id="phaseFilter"><option value="all">Todas las fases</option></select></div>
+        <div id="taskList" class="task-list"></div>
+      </section>
+
+      <section class="view" id="view-library">
+        <div class="section-intro"><div><p class="eyebrow">03 · FUENTES</p><h2>Bibliografía</h2><p>Un registro de fuentes, ideas útiles y preguntas que quedan abiertas.</p></div><button class="button button-primary" id="addSourceBtn">＋ Añadir fuente</button></div>
+        <div class="filter-row"><input id="sourceSearch" type="search" placeholder="Buscar título, autor o tema…"><select id="sourceStatus"><option value="all">Todos los estados</option><option value="to_read">Por leer</option><option value="reading">Leyendo</option><option value="read">Leído</option><option value="useful">Clave para el TFG</option></select></div>
+        <div id="sourceList" class="source-grid"></div>
+      </section>
+
+      <section class="view" id="view-simulations">
+        <div class="section-intro"><div><p class="eyebrow">04 · MODELOS</p><h2>Banco de simulaciones</h2><p>Documenta el propósito, las hipótesis, las variables y lo que significan los resultados.</p></div><button class="button button-primary" id="addSimulationBtn">＋ Registrar modelo</button></div>
+        <div class="model-checklist"><span class="eyebrow">FICHA MÍNIMA DE UNA SIMULACIÓN</span><div><span>01</span> Pregunta física <span>02</span> Hipótesis <span>03</span> Parámetros <span>04</span> Verificación <span>05</span> Interpretación</div></div>
+        <div id="simulationList" class="simulation-list"></div>
+      </section>
+    </section>
+  </main>
+
+  <footer><span>CUADERNO DE BIOFÍSICA</span><span>Hecho para pensar con rigor · <span id="footerYear"></span></span><span id="saveStatus">Cambios sincronizados</span></footer>
+
+  <dialog id="taskDialog" class="edit-dialog">
+    <form id="taskForm" method="dialog">
+      <div class="dialog-head"><div><p class="eyebrow">PLAN DE TRABAJO</p><h2 id="taskDialogTitle">Nueva tarea</h2></div><button class="icon-button" type="button" data-close="taskDialog">×</button></div>
+      <input type="hidden" id="taskId">
+      <label for="taskTitle">Tarea</label><input id="taskTitle" required maxlength="180" placeholder="Ej. Derivar la fuerza de arrastre en el régimen elegido">
+      <div class="two-fields"><div><label for="taskPhase">Fase</label><select id="taskPhase"></select></div><div><label for="taskTopic">Tema científico</label><select id="taskTopic"></select></div></div>
+      <div class="two-fields"><div><label for="taskStatus">Estado</label><select id="taskStatus"><option value="todo">Pendiente</option><option value="doing">En curso</option><option value="blocked">Bloqueada</option><option value="done">Completada</option></select></div><div><label for="taskDue">Fecha objetivo</label><input id="taskDue" type="date"></div></div>
+      <label for="taskNotes">Notas / criterio de cierre</label><textarea id="taskNotes" rows="3" placeholder="¿Qué resultado concreto demostraría que está terminada?"></textarea>
+      <div class="dialog-actions"><button class="button button-quiet" type="button" data-close="taskDialog">Cancelar</button><button class="button button-primary" type="submit">Guardar tarea</button></div>
+      <p class="form-message" id="taskFormMessage"></p>
+    </form>
+  </dialog>
+
+  <dialog id="sourceDialog" class="edit-dialog">
+    <form id="sourceForm" method="dialog">
+      <div class="dialog-head"><div><p class="eyebrow">FUENTES</p><h2 id="sourceDialogTitle">Añadir referencia</h2></div><button class="icon-button" type="button" data-close="sourceDialog">×</button></div>
+      <input type="hidden" id="sourceId">
+      <label for="sourceTitleInput">Título</label><input id="sourceTitleInput" required maxlength="220" placeholder="Título del artículo, capítulo o libro">
+      <div class="two-fields"><div><label for="sourceAuthor">Autoría</label><input id="sourceAuthor" placeholder="Autor(es)"></div><div><label for="sourceYear">Año</label><input id="sourceYear" type="number" min="1800" max="2100" placeholder="2024"></div></div>
+      <label for="sourceUrl">DOI o URL</label><input id="sourceUrl" type="url" placeholder="https://doi.org/…">
+      <div class="two-fields"><div><label for="sourceTopic">Tema</label><select id="sourceTopic"></select></div><div><label for="sourceReadStatus">Estado</label><select id="sourceReadStatus"><option value="to_read">Por leer</option><option value="reading">Leyendo</option><option value="read">Leído</option><option value="useful">Clave para el TFG</option></select></div></div>
+      <label for="sourceNotes">Notas, resultados o citas para revisar</label><textarea id="sourceNotes" rows="4" placeholder="Idea central, ecuaciones útiles, limitaciones, páginas relevantes…"></textarea>
+      <div class="dialog-actions"><button class="button button-quiet" type="button" data-close="sourceDialog">Cancelar</button><button class="button button-primary" type="submit">Guardar fuente</button></div>
+      <p class="form-message" id="sourceFormMessage"></p>
+    </form>
+  </dialog>
+
+  <dialog id="simulationDialog" class="edit-dialog wide-dialog">
+    <form id="simulationForm" method="dialog">
+      <div class="dialog-head"><div><p class="eyebrow">BANCO DE MODELOS</p><h2 id="simulationDialogTitle">Registrar simulación</h2></div><button class="icon-button" type="button" data-close="simulationDialog">×</button></div>
+      <input type="hidden" id="simulationId">
+      <label for="simulationTitle">Nombre del modelo</label><input id="simulationTitle" required maxlength="180" placeholder="Ej. Adhesión de una célula rígida bajo flujo">
+      <div class="two-fields"><div><label for="simulationTopic">Tema</label><select id="simulationTopic"></select></div><div><label for="simulationStatus">Estado</label><select id="simulationStatus"><option value="idea">Idea</option><option value="building">En desarrollo</option><option value="running">Ejecutada</option><option value="analysed">Analizada</option><option value="validated">Verificada / validada</option></select></div></div>
+      <label for="simulationQuestion">Pregunta física</label><textarea id="simulationQuestion" rows="2" placeholder="¿Qué fenómeno o relación quieres estudiar?"></textarea>
+      <label for="simulationAssumptions">Hipótesis y aproximaciones</label><textarea id="simulationAssumptions" rows="2" placeholder="Geometría, régimen, condiciones de contorno, simplificaciones…"></textarea>
+      <label for="simulationVariables">Variables y parámetros</label><textarea id="simulationVariables" rows="2" placeholder="Variables de entrada, parámetros, magnitudes de salida y unidades…"></textarea>
+      <label for="simulationResults">Resultados e interpretación</label><textarea id="simulationResults" rows="3" placeholder="Qué observas, explicación física, comprobaciones, limitaciones y siguientes pasos…"></textarea>
+      <label for="simulationLink">Enlace a código, notebook o carpeta</label><input id="simulationLink" type="url" placeholder="Repositorio o enlace compartido (opcional)">
+      <div class="dialog-actions"><button class="button button-quiet" type="button" data-close="simulationDialog">Cancelar</button><button class="button button-primary" type="submit">Guardar modelo</button></div>
+      <p class="form-message" id="simulationFormMessage"></p>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
