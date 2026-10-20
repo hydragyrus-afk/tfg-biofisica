@@ -10,6 +10,48 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+  .calendar-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .calendar-shell{margin-top:24px;background:var(--paper,#fbfaf6);border:1px solid rgba(35,35,30,.12);border-radius:18px;overflow:hidden}
+  .calendar-toolbar{display:flex;justify-content:space-between;align-items:center;padding:20px 22px;border-bottom:1px solid rgba(35,35,30,.1);gap:20px}
+  .calendar-toolbar h3{margin:5px 0 0;font-family:Fraunces,serif;font-size:28px}
+  .calendar-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:#666}
+  .calendar-legend span{display:flex;align-items:center;gap:6px}
+  .calendar-dot{width:8px;height:8px;border-radius:50%;display:inline-block;background:#bbb}
+  .calendar-dot.done{background:#5d806b}.calendar-dot.due{background:#c89a4b}.calendar-dot.today{background:#222}
+  .calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+  .calendar-weekday{padding:10px 12px;font:500 11px "DM Mono",monospace;text-transform:uppercase;color:#777;border-bottom:1px solid rgba(35,35,30,.1)}
+  .calendar-day{min-height:112px;padding:10px;border-right:1px solid rgba(35,35,30,.08);border-bottom:1px solid rgba(35,35,30,.08);background:#fff}
+  .calendar-day:nth-child(7n){border-right:0}.calendar-day.muted{opacity:.4;background:#f7f6f1}
+  .calendar-day.today{box-shadow:inset 0 0 0 2px #222}
+  .calendar-date{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;font:500 12px "DM Mono",monospace}
+  .calendar-check{appearance:none;width:15px;height:15px;border:1px solid #aaa;border-radius:4px;display:inline-grid;place-content:center;cursor:pointer;background:white}
+  .calendar-check:checked{background:#5d806b;border-color:#5d806b}.calendar-check:checked:after{content:"✓";color:white;font-size:10px}
+  .calendar-events{display:flex;flex-direction:column;gap:4px}
+  .calendar-event{font-size:11px;line-height:1.25;padding:5px 6px;border-radius:6px;background:#f1eee6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .calendar-event.due{background:#f3e7cf}.calendar-event.done{text-decoration:line-through;opacity:.7}
+  .calendar-lower-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+  .daily-check{display:grid;gap:8px}
+  .daily-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid rgba(35,35,30,.1);border-radius:9px}
+  .daily-row label{font-size:13px;flex:1}.daily-row small{color:#888;font-size:10px}
+  .milestone-list{display:grid;gap:8px}.milestone-item{display:grid;grid-template-columns:70px 1fr auto;gap:10px;align-items:center;padding:10px;border-bottom:1px solid rgba(35,35,30,.08)}
+  .milestone-date{font:500 11px "DM Mono",monospace;color:#8a6b35}.milestone-title{font-size:13px}.milestone-status{font-size:10px;text-transform:uppercase;color:#777}
+  .monthly-panel,.report-panel{margin-top:18px}
+  .panel-subtitle{max-width:720px;color:#777;font-size:13px;line-height:1.5}
+  .monthly-objectives{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  .month-card{border:1px solid rgba(35,35,30,.1);border-radius:12px;padding:14px;background:#fff}
+  .month-card.active{box-shadow:inset 0 0 0 2px rgba(93,128,107,.45)}
+  .month-card h3{font-family:Fraunces,serif;margin:0 0 10px;font-size:20px}
+  .month-progress{height:5px;background:#ece9e1;border-radius:99px;overflow:hidden;margin:8px 0 12px}.month-progress span{display:block;height:100%;background:#5d806b}
+  .objective{display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:12px}.objective input{margin-top:2px}
+  .report-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  .report-card{padding:14px;border:1px solid rgba(35,35,30,.1);border-radius:12px;background:#fff}
+  .report-card h3{margin:0 0 8px;font-family:Fraunces,serif}.report-kpi{font:500 22px "DM Mono",monospace}.report-card p{font-size:12px;color:#666;line-height:1.45}
+  @media(max-width:900px){.calendar-lower-grid,.monthly-objectives,.report-grid{grid-template-columns:1fr 1fr}.calendar-day{min-height:90px}}
+  @media(max-width:650px){.calendar-toolbar{align-items:flex-start;flex-direction:column}.calendar-lower-grid,.monthly-objectives,.report-grid{grid-template-columns:1fr}.calendar-day{min-height:76px;padding:7px}.calendar-event{font-size:9px}}
+</style>
+
 </head>
 <body>
   <div class="paper-grain"></div>
@@ -62,6 +104,7 @@
         <button class="nav-item active" data-view="dashboard"><span>◫</span> Resumen</button>
         <button class="nav-item" data-view="topics"><span>⌘</span> Mapa científico</button>
         <button class="nav-item" data-view="tasks"><span>☷</span> Tareas <b id="taskNavCount">0</b></button>
+        <button class="nav-item" data-view="calendar"><span>◷</span> Calendario</button>
         <button class="nav-item" data-view="library"><span>▤</span> Bibliografía</button>
         <button class="nav-item" data-view="simulations"><span>∿</span> Simulaciones</button>
       </nav>
@@ -95,6 +138,73 @@
         <div class="section-intro"><div><p class="eyebrow">02 · EJECUCIÓN</p><h2>Lista de trabajo</h2><p>Convierte cada fase en una acción verificable y concreta.</p></div><button class="button button-primary" id="addTaskBtn">＋ Añadir tarea</button></div>
         <div class="filter-row"><input id="taskSearch" type="search" placeholder="Buscar tarea, tema o nota…"><select id="taskFilter"><option value="all">Todos los estados</option><option value="todo">Pendientes</option><option value="doing">En curso</option><option value="done">Completadas</option><option value="blocked">Bloqueadas</option></select><select id="phaseFilter"><option value="all">Todas las fases</option></select></div>
         <div id="taskList" class="task-list"></div>
+      </section>
+
+
+      <section class="view" id="view-calendar">
+        <div class="section-intro">
+          <div>
+            <p class="eyebrow">03 · CALENDARIO Y RITMO</p>
+            <h2>Calendario de avance</h2>
+            <p>Actualiza los checks diarios, visualiza los próximos hitos y mantén un checklist mensual de noviembre a julio.</p>
+          </div>
+          <div class="calendar-actions">
+            <button class="button button-quiet" id="calendarPrev">← Anterior</button>
+            <button class="button button-quiet" id="calendarToday">Hoy</button>
+            <button class="button button-quiet" id="calendarNext">Siguiente →</button>
+          </div>
+        </div>
+
+        <div class="calendar-shell">
+          <div class="calendar-toolbar">
+            <div>
+              <span class="eyebrow">MES ACTIVO</span>
+              <h3 id="calendarMonthLabel">Noviembre 2026</h3>
+            </div>
+            <div class="calendar-legend">
+              <span><i class="calendar-dot done"></i> Hecho</span>
+              <span><i class="calendar-dot due"></i> Hito / fecha límite</span>
+              <span><i class="calendar-dot today"></i> Hoy</span>
+            </div>
+          </div>
+          <div id="calendarGrid" class="calendar-grid"></div>
+        </div>
+
+        <div class="calendar-lower-grid">
+          <article class="panel">
+            <div class="panel-heading">
+              <div><p class="eyebrow">RUTINA</p><h2>Check diario</h2></div>
+              <button class="text-button" id="resetDailyCheck">Reiniciar hoy</button>
+            </div>
+            <div class="daily-check" id="dailyCheck"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-heading">
+              <div><p class="eyebrow">PRÓXIMOS HITOS</p><h2>Lo que viene</h2></div>
+            </div>
+            <div id="upcomingMilestones" class="milestone-list"></div>
+          </article>
+        </div>
+
+        <article class="panel monthly-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">NOVIEMBRE → JULIO</p>
+              <h2>Checklist de objetivos por mes</h2>
+              <p class="panel-subtitle">Marca lo que debe quedar resuelto para ir al día. El informe mensual se genera automáticamente a partir de estos checks y de las tareas completadas.</p>
+            </div>
+          </div>
+          <div id="monthlyObjectives" class="monthly-objectives"></div>
+        </article>
+
+        <article class="panel report-panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">INFORME AUTOMÁTICO</p><h2>Lo logrado cada mes</h2></div>
+            <button class="text-button" id="refreshMonthlyReport">Actualizar informe ↻</button>
+          </div>
+          <div id="monthlyReport" class="monthly-report"></div>
+        </article>
       </section>
 
       <section class="view" id="view-library">
@@ -159,5 +269,124 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="config.js"></script>
   <script src="app.js"></script>
+
+<script>
+(() => {
+  const MONTHS = [
+    {key:'2026-11',name:'Noviembre', objectives:['Cerrar mapa científico y prioridades del TFG','Completar la bibliografía base','Definir pregunta, hipótesis y alcance del modelo','Dejar plan de trabajo y fechas objetivo']},
+    {key:'2026-12',name:'Diciembre', objectives:['Consolidar fundamentos físicos y matemáticos','Completar primeras simulaciones','Validar supuestos y condiciones de contorno','Registrar resultados reproducibles']},
+    {key:'2027-01',name:'Enero', objectives:['Cerrar modelo principal','Comparar resultados con referencias','Documentar parámetros y decisiones','Identificar limitaciones principales']},
+    {key:'2027-02',name:'Febrero', objectives:['Ejecutar batería de simulaciones','Analizar sensibilidad y robustez','Seleccionar figuras y tablas clave','Actualizar conclusiones provisionales']},
+    {key:'2027-03',name:'Marzo', objectives:['Completar análisis científico','Redactar metodología','Redactar resultados','Revisar trazabilidad entre preguntas y resultados']},
+    {key:'2027-04',name:'Abril', objectives:['Completar discusión','Cerrar bibliografía esencial','Integrar figuras y tablas','Primera versión completa de la memoria']},
+    {key:'2027-05',name:'Mayo', objectives:['Revisión científica completa','Corregir inconsistencias','Pulir gráficos, leyendas y referencias','Versión casi final del TFG']},
+    {key:'2027-06',name:'Junio', objectives:['Corrección final de memoria','Preparar defensa/presentación','Ensayar explicación del modelo','Cerrar tareas pendientes']},
+    {key:'2027-07',name:'Julio', objectives:['Entregar versión final','Realizar defensa','Registrar lecciones aprendidas','Cerrar y archivar resultados del proyecto']}
+  ];
+  const DAILY = [
+    'Revisar prioridades del día','Completar al menos un check/tarea verificable',
+    'Registrar una decisión o hallazgo','Actualizar el siguiente paso'
+  ];
+  const state = JSON.parse(localStorage.getItem('tfgCalendarState') || '{}');
+  state.daily = state.daily || {};
+  state.objectives = state.objectives || {};
+  state.manualMilestones = state.manualMilestones || [];
+
+  const $ = id => document.getElementById(id);
+  let cursor = new Date('2026-11-01T12:00:00');
+
+  function save(){ localStorage.setItem('tfgCalendarState', JSON.stringify(state)); }
+  function key(d){ return d.toISOString().slice(0,10); }
+  function monthKey(d){ return d.toISOString().slice(0,7); }
+  function isAllowedMonth(d){ return MONTHS.some(m => m.key === monthKey(d)); }
+  function taskData(){
+    const items = [...document.querySelectorAll('#taskList .task-item, #taskList [data-task-id]')];
+    return items.map(el => ({
+      title: (el.querySelector('.task-title,h3,h4,[data-task-title]')?.textContent || el.textContent || 'Tarea').trim().replace(/\s+/g,' ').slice(0,80),
+      due: el.dataset.due || el.querySelector('time')?.getAttribute('datetime') || '',
+      done: el.classList.contains('done') || /completad/i.test(el.textContent || '')
+    })).filter(x => x.title);
+  }
+
+  function renderCalendar(){
+    const grid=$('calendarGrid'); if(!grid) return;
+    const y=cursor.getFullYear(), m=cursor.getMonth();
+    $('calendarMonthLabel').textContent = new Intl.DateTimeFormat('es-ES',{month:'long',year:'numeric'}).format(cursor).replace(/^./,c=>c.toUpperCase());
+    const weekdays=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+    grid.innerHTML = weekdays.map(w=>`<div class="calendar-weekday">${w}</div>`).join('');
+    const first=new Date(y,m,1), start=(first.getDay()+6)%7, days=new Date(y,m+1,0).getDate(), prevDays=new Date(y,m,0).getDate();
+    const todayKey=key(new Date());
+    for(let i=0;i<42;i++){
+      const n=i-start+1, d=new Date(y,m,n);
+      const inMonth=n>=1 && n<=days, dateStr=key(d);
+      const tasks=taskData().filter(t=>t.due===dateStr);
+      const checked=!!state.daily[dateStr];
+      const events=tasks.map(t=>`<div class="calendar-event due ${t.done?'done':''}" title="${escapeHtml(t.title)}">${escapeHtml(t.title)}</div>`).join('');
+      grid.insertAdjacentHTML('beforeend',`<div class="calendar-day ${inMonth?'':'muted'} ${dateStr===todayKey?'today':''}">
+        <div class="calendar-date"><span>${d.getDate()}</span>${inMonth?`<input class="calendar-check" type="checkbox" data-day="${dateStr}" ${checked?'checked':''} aria-label="Check diario ${dateStr}">`:''}</div>
+        <div class="calendar-events">${events}</div>
+      </div>`);
+    }
+    grid.querySelectorAll('.calendar-check').forEach(c=>c.addEventListener('change',e=>{state.daily[e.target.dataset.day]=e.target.checked;save();renderDaily();renderReport();}));
+    renderUpcoming();
+  }
+
+  function renderDaily(){
+    const wrap=$('dailyCheck'); if(!wrap)return;
+    const today=key(new Date());
+    wrap.innerHTML=DAILY.map((t,i)=>`<div class="daily-row"><input type="checkbox" id="daily-${i}" ${((state.dailyDetails||{})[today]||[]).includes(i)?'checked':''}><label for="daily-${i}">${t}</label><small>${today}</small></div>`).join('');
+    wrap.querySelectorAll('input').forEach((c,i)=>c.addEventListener('change',()=>{state.dailyDetails=state.dailyDetails||{};state.dailyDetails[today]=state.dailyDetails[today]||[];state.dailyDetails[today]=c.checked?[...new Set([...state.dailyDetails[today],i])]:state.dailyDetails[today].filter(x=>x!==i);save();renderReport();}));
+  }
+
+  function renderUpcoming(){
+    const wrap=$('upcomingMilestones'); if(!wrap)return;
+    const items=taskData().filter(t=>t.due && t.due>=key(new Date())).sort((a,b)=>a.due.localeCompare(b.due)).slice(0,8);
+    wrap.innerHTML=items.length?items.map(t=>`<div class="milestone-item"><div class="milestone-date">${formatDate(t.due)}</div><div class="milestone-title">${escapeHtml(t.title)}</div><div class="milestone-status">${t.done?'Hecho':'Pendiente'}</div></div>`).join(''):'<p class="small-muted">Las tareas con fecha objetivo aparecerán aquí.</p>';
+  }
+
+  function renderObjectives(){
+    const wrap=$('monthlyObjectives'); if(!wrap)return;
+    wrap.innerHTML=MONTHS.map((mo,mi)=>{
+      const vals=state.objectives[mo.key]||[];
+      const done=vals.filter(Boolean).length, pct=Math.round(done/mo.objectives.length*100);
+      return `<div class="month-card ${monthKey(cursor)===mo.key?'active':''}">
+        <h3>${mo.name} <small>${mo.key.slice(0,4)}</small></h3>
+        <div class="month-progress"><span style="width:${pct}%"></span></div>
+        ${mo.objectives.map((o,i)=>`<div class="objective"><input type="checkbox" data-month="${mo.key}" data-obj="${i}" ${vals[i]?'checked':''}><label>${o}</label></div>`).join('')}
+      </div>`;
+    }).join('');
+    wrap.querySelectorAll('input').forEach(c=>c.addEventListener('change',e=>{const m=e.target.dataset.month,i=+e.target.dataset.obj;state.objectives[m]=state.objectives[m]||[];state.objectives[m][i]=e.target.checked;save();renderObjectives();renderReport();}));
+  }
+
+  function renderReport(){
+    const wrap=$('monthlyReport'); if(!wrap)return;
+    const reports=MONTHS.map(m=>{
+      const obj=(state.objectives[m.key]||[]).filter(Boolean).length;
+      const total=m.objectives.length;
+      const daily=Object.keys(state.daily).filter(d=>d.startsWith(m.key)&&state.daily[d]).length;
+      const tasks=taskData().filter(t=>t.done && t.due && t.due.startsWith(m.key)).length;
+      return `<div class="report-card"><h3>${m.name}</h3><div class="report-kpi">${obj}/${total}</div><p><strong>Objetivos:</strong> ${Math.round(obj/total*100)}%. <strong>Checks diarios:</strong> ${daily}. <strong>Tareas con fecha completadas:</strong> ${tasks}.</p><p>${obj===total?'Mes completado con todos los objetivos previstos.':obj>=Math.ceil(total*.7)?'Buen ritmo: la mayor parte del mes está cubierta.':'Mes pendiente de consolidación: prioriza los objetivos no marcados.'}</p></div>`;
+    }).join('');
+    wrap.innerHTML=`<div class="report-grid">${reports}</div>`;
+  }
+
+  function formatDate(s){return new Intl.DateTimeFormat('es-ES',{day:'2-digit',month:'short'}).format(new Date(s+'T12:00:00'));}
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
+
+  function init(){
+    if(!$('view-calendar'))return;
+    $('calendarPrev')?.addEventListener('click',()=>{cursor.setMonth(cursor.getMonth()-1);if(!isAllowedMonth(cursor))cursor=new Date('2026-11-01T12:00:00');renderAll();});
+    $('calendarNext')?.addEventListener('click',()=>{cursor.setMonth(cursor.getMonth()+1);if(!isAllowedMonth(cursor))cursor=new Date('2026-11-01T12:00:00');renderAll();});
+    $('calendarToday')?.addEventListener('click',()=>{const now=new Date();cursor=isAllowedMonth(now)?new Date(now.getFullYear(),now.getMonth(),1):new Date('2026-11-01T12:00:00');renderAll();});
+    $('resetDailyCheck')?.addEventListener('click',()=>{const t=key(new Date());delete state.daily[t];delete (state.dailyDetails||{})[t];save();renderAll();});
+    $('refreshMonthlyReport')?.addEventListener('click',renderReport);
+    renderAll();
+    const list=$('taskList'); if(list)new MutationObserver(()=>{renderCalendar();renderReport();}).observe(list,{childList:true,subtree:true,characterData:true});
+  }
+  function renderAll(){renderCalendar();renderDaily();renderObjectives();renderReport();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
 </body>
 </html>
