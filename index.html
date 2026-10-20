@@ -52,6 +52,28 @@
   @media(max-width:650px){.calendar-toolbar{align-items:flex-start;flex-direction:column}.calendar-lower-grid,.monthly-objectives,.report-grid{grid-template-columns:1fr}.calendar-day{min-height:76px;padding:7px}.calendar-event{font-size:9px}}
 </style>
 
+
+<style>
+  .bib-stats-grid{display:grid;grid-template-columns:1.5fr repeat(3,1fr);gap:14px;margin:22px 0}
+  .bib-filters{margin-bottom:18px}
+  .bib-topic-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  .bib-topic-card{border:1px solid rgba(35,35,30,.1);border-radius:12px;padding:15px;background:#fff}
+  .bib-topic-card h3{font-family:Fraunces,serif;font-size:20px;margin:0 0 4px}
+  .bib-topic-meta{display:flex;justify-content:space-between;font-size:11px;color:#777;margin:8px 0}
+  .bib-progress{height:6px;background:#ece9e1;border-radius:99px;overflow:hidden}.bib-progress span{display:block;height:100%;background:#5d806b}
+  .bib-priority{margin-top:10px;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#777}
+  .bib-ranking{display:grid;gap:7px}
+  .bib-row{display:grid;grid-template-columns:42px minmax(0,1fr) 140px 105px 105px;gap:12px;align-items:center;padding:12px;border-bottom:1px solid rgba(35,35,30,.08)}
+  .bib-rank{font:500 12px "DM Mono",monospace;color:#888}
+  .bib-title{font-size:13px;font-weight:600}.bib-author{font-size:11px;color:#777;margin-top:3px}
+  .bib-topic-tag,.bib-status-tag,.bib-importance-tag{font-size:10px;padding:5px 7px;border-radius:6px;background:#f1eee6;text-align:center}
+  .bib-status-tag.read{background:#e5eee8;color:#42654f}.bib-status-tag.pending{background:#f3e7cf;color:#8a6b35}
+  .bib-importance-tag.essential{background:#eee2c9}.bib-importance-tag.very_important{background:#f2e5d8}
+  .bib-empty{padding:24px;text-align:center;color:#777;font-size:13px}
+  @media(max-width:1000px){.bib-stats-grid{grid-template-columns:1fr 1fr}.bib-topic-summary{grid-template-columns:1fr 1fr}.bib-row{grid-template-columns:32px 1fr 100px}}
+  @media(max-width:650px){.bib-stats-grid,.bib-topic-summary{grid-template-columns:1fr}.bib-row{grid-template-columns:28px 1fr}.bib-row>.bib-topic-tag,.bib-row>.bib-status-tag,.bib-row>.bib-importance-tag{display:none}}
+</style>
+
 </head>
 <body>
   <div class="paper-grain"></div>
@@ -106,6 +128,7 @@
         <button class="nav-item" data-view="tasks"><span>☷</span> Tareas <b id="taskNavCount">0</b></button>
         <button class="nav-item" data-view="calendar"><span>◷</span> Calendario</button>
         <button class="nav-item" data-view="library"><span>▤</span> Bibliografía</button>
+        <button class="nav-item" data-view="bibmap"><span>◈</span> Mapa bibliográfico</button>
         <button class="nav-item" data-view="simulations"><span>∿</span> Simulaciones</button>
       </nav>
 
@@ -213,6 +236,57 @@
         <div id="sourceList" class="source-grid"></div>
       </section>
 
+
+      <section class="view" id="view-bibmap">
+        <div class="section-intro">
+          <div>
+            <p class="eyebrow">04 · ANÁLISIS BIBLIOGRÁFICO</p>
+            <h2>Mapa bibliográfico</h2>
+            <p>Ordena tus referencias por tema, estado de lectura e importancia. Los datos se alimentan directamente de tu bibliografía.</p>
+          </div>
+          <button class="button button-primary" id="goToLibraryBtn">＋ Añadir referencia</button>
+        </div>
+
+        <div class="bib-stats-grid">
+          <article class="stat-card stat-main"><span class="stat-label">REFERENCIAS</span><div class="stat-value"><strong id="bibTotal">0</strong></div><div class="progress-track"><span id="bibReadBar"></span></div><p id="bibReadCaption">0 leídas · 0 pendientes</p></article>
+          <article class="stat-card"><span class="stat-label">LEÍDAS</span><div class="stat-value"><strong id="bibRead">0</strong></div><p>Referencias revisadas</p></article>
+          <article class="stat-card"><span class="stat-label">PENDIENTES</span><div class="stat-value"><strong id="bibPending">0</strong></div><p>Todavía por revisar</p></article>
+          <article class="stat-card"><span class="stat-label">ESENCIALES</span><div class="stat-value"><strong id="bibEssential">0</strong></div><p>Máxima prioridad</p></article>
+        </div>
+
+        <div class="filter-row bib-filters">
+          <input id="bibMapSearch" type="search" placeholder="Buscar título, autor o tema…">
+          <select id="bibMapTopic"><option value="all">Todos los temas</option></select>
+          <select id="bibMapStatus">
+            <option value="all">Todos los estados</option>
+            <option value="read">Leídos</option>
+            <option value="unread">Pendientes</option>
+          </select>
+          <select id="bibMapImportance">
+            <option value="all">Toda importancia</option>
+            <option value="essential">⭐ Esencial</option>
+            <option value="very_important">🔥 Muy importante</option>
+            <option value="important">Importante</option>
+            <option value="complementary">Complementaria</option>
+          </select>
+        </div>
+
+        <article class="panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">RESUMEN</p><h2>Bibliografía por temas</h2></div>
+          </div>
+          <div id="bibTopicSummary" class="bib-topic-summary"></div>
+        </article>
+
+        <article class="panel bib-ranking-panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">ORDEN DE LECTURA</p><h2>Referencias por importancia</h2></div>
+            <span class="small-muted" id="bibResultCount">0 referencias</span>
+          </div>
+          <div id="bibRanking" class="bib-ranking"></div>
+        </article>
+      </section>
+
       <section class="view" id="view-simulations">
         <div class="section-intro"><div><p class="eyebrow">04 · MODELOS</p><h2>Banco de simulaciones</h2><p>Documenta el propósito, las hipótesis, las variables y lo que significan los resultados.</p></div><button class="button button-primary" id="addSimulationBtn">＋ Registrar modelo</button></div>
         <div class="model-checklist"><span class="eyebrow">FICHA MÍNIMA DE UNA SIMULACIÓN</span><div><span>01</span> Pregunta física <span>02</span> Hipótesis <span>03</span> Parámetros <span>04</span> Verificación <span>05</span> Interpretación</div></div>
@@ -244,6 +318,13 @@
       <div class="two-fields"><div><label for="sourceAuthor">Autoría</label><input id="sourceAuthor" placeholder="Autor(es)"></div><div><label for="sourceYear">Año</label><input id="sourceYear" type="number" min="1800" max="2100" placeholder="2024"></div></div>
       <label for="sourceUrl">DOI o URL</label><input id="sourceUrl" type="url" placeholder="https://doi.org/…">
       <div class="two-fields"><div><label for="sourceTopic">Tema</label><select id="sourceTopic"></select></div><div><label for="sourceReadStatus">Estado</label><select id="sourceReadStatus"><option value="to_read">Por leer</option><option value="reading">Leyendo</option><option value="read">Leído</option><option value="useful">Clave para el TFG</option></select></div></div>
+      <label for="sourceImportance">Importancia</label>
+      <select id="sourceImportance">
+        <option value="essential">⭐ Esencial</option>
+        <option value="very_important">🔥 Muy importante</option>
+        <option value="important" selected>Importante</option>
+        <option value="complementary">Complementaria</option>
+      </select>
       <label for="sourceNotes">Notas, resultados o citas para revisar</label><textarea id="sourceNotes" rows="4" placeholder="Idea central, ecuaciones útiles, limitaciones, páginas relevantes…"></textarea>
       <div class="dialog-actions"><button class="button button-quiet" type="button" data-close="sourceDialog">Cancelar</button><button class="button button-primary" type="submit">Guardar fuente</button></div>
       <p class="form-message" id="sourceFormMessage"></p>
@@ -385,6 +466,137 @@
   }
   function renderAll(){renderCalendar();renderDaily();renderObjectives();renderReport();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+
+
+<script>
+(() => {
+  const importanceRank = {essential:0, very_important:1, important:2, complementary:3};
+  const importanceLabel = {
+    essential:'⭐ Esencial',
+    very_important:'🔥 Muy importante',
+    important:'Importante',
+    complementary:'Complementaria'
+  };
+
+  const $ = id => document.getElementById(id);
+  const clean = s => String(s || '').replace(/\s+/g,' ').trim();
+
+  function getSourcesFromDOM(){
+    const list = $('sourceList');
+    if(!list) return [];
+    const nodes = [...list.children];
+    return nodes.map((el, i) => {
+      const text = clean(el.textContent);
+      const title = clean(el.querySelector('.source-title,h3,h4,[data-source-title]')?.textContent) ||
+                    clean(el.querySelector('strong')?.textContent) ||
+                    text.slice(0,120) || `Referencia ${i+1}`;
+      const author = clean(el.querySelector('.source-author,[data-source-author]')?.textContent) || '';
+      const topic = clean(el.querySelector('.source-topic,[data-source-topic]')?.textContent) || 'Sin tema';
+      const statusText = clean(el.querySelector('.source-status,[data-source-status]')?.textContent) || text;
+      const status = /leído|clave para el tfg/i.test(statusText) ? 'read' : 'unread';
+      const storedId = el.dataset.sourceId || el.getAttribute('data-id') || '';
+      const importance = localStorage.getItem('bibImportance:'+storedId) || 'important';
+      return {el,title,author,topic,status,importance};
+    }).filter(x => x.el);
+  }
+
+  function getSourcesFromLocalFallback(){
+    // Permite conservar la clasificación aunque la interfaz de Bibliografía aún no exponga
+    // clases específicas para todos los campos.
+    try {
+      const raw = JSON.parse(localStorage.getItem('tfgCalendarState') || '{}');
+      return raw.bibliography || [];
+    } catch { return []; }
+  }
+
+  function renderMap(){
+    const rows = getSourcesFromDOM();
+    const search = clean($('bibMapSearch')?.value).toLowerCase();
+    const topicFilter = $('bibMapTopic')?.value || 'all';
+    const statusFilter = $('bibMapStatus')?.value || 'all';
+    const impFilter = $('bibMapImportance')?.value || 'all';
+
+    // Actualizar selector de temas
+    const topicSelect = $('bibMapTopic');
+    if(topicSelect){
+      const current = topicSelect.value;
+      const topics = [...new Set(rows.map(r=>r.topic).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
+      topicSelect.innerHTML = '<option value="all">Todos los temas</option>' +
+        topics.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
+      topicSelect.value = topics.includes(current) ? current : 'all';
+    }
+
+    const filtered = rows.filter(r=>{
+      const hay = `${r.title} ${r.author} ${r.topic}`.toLowerCase();
+      if(search && !hay.includes(search)) return false;
+      if(topicFilter !== 'all' && r.topic !== topicFilter) return false;
+      if(statusFilter === 'read' && r.status !== 'read') return false;
+      if(statusFilter === 'unread' && r.status === 'read') return false;
+      if(impFilter !== 'all' && r.importance !== impFilter) return false;
+      return true;
+    }).sort((a,b)=>
+      (importanceRank[a.importance]??2)-(importanceRank[b.importance]??2) ||
+      a.topic.localeCompare(b.topic,'es') ||
+      a.title.localeCompare(b.title,'es')
+    );
+
+    const total=rows.length, read=rows.filter(r=>r.status==='read').length;
+    $('bibTotal').textContent=total;
+    $('bibRead').textContent=read;
+    $('bibPending').textContent=total-read;
+    $('bibEssential').textContent=rows.filter(r=>r.importance==='essential').length;
+    const pct=total?Math.round(read/total*100):0;
+    $('bibReadBar').style.width=pct+'%';
+    $('bibReadCaption').textContent=`${read} leídas · ${total-read} pendientes · ${pct}% completado`;
+    $('bibResultCount').textContent=`${filtered.length} referencia${filtered.length===1?'':'s'}`;
+
+    const topics = [...new Set(rows.map(r=>r.topic).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
+    $('bibTopicSummary').innerHTML = topics.length ? topics.map(topic=>{
+      const ts=rows.filter(r=>r.topic===topic), tr=ts.filter(r=>r.status==='read').length;
+      const tp=Math.round((tr/ts.length)*100);
+      const ess=ts.filter(r=>r.importance==='essential').length;
+      return `<div class="bib-topic-card"><h3>${esc(topic)}</h3>
+        <div class="bib-topic-meta"><span>${ts.length} referencias</span><span>${tr} leídas · ${ts.length-tr} pendientes</span></div>
+        <div class="bib-progress"><span style="width:${tp}%"></span></div>
+        <div class="bib-topic-meta"><span>${tp}% leído</span><span>${ess} esenciales</span></div>
+        <div class="bib-priority">${priorityText(ts)}</div></div>`;
+    }).join('') : '<div class="bib-empty">Todavía no hay referencias para agrupar.</div>';
+
+    $('bibRanking').innerHTML = filtered.length ? filtered.map((r,i)=>`
+      <div class="bib-row">
+        <div class="bib-rank">${String(i+1).padStart(2,'0')}</div>
+        <div><div class="bib-title">${esc(r.title)}</div><div class="bib-author">${esc(r.author || 'Autoría no indicada')}</div></div>
+        <div class="bib-topic-tag">${esc(r.topic)}</div>
+        <div class="bib-status-tag ${r.status==='read'?'read':'pending'}">${r.status==='read'?'✓ Leído':'○ Pendiente'}</div>
+        <div class="bib-importance-tag ${r.importance}">${importanceLabel[r.importance]||'Importante'}</div>
+      </div>`).join('') : '<div class="bib-empty">No hay referencias que coincidan con estos filtros.</div>';
+  }
+
+  function priorityText(rows){
+    const e=rows.filter(r=>r.importance==='essential').length;
+    const v=rows.filter(r=>r.importance==='very_important').length;
+    return e?`${e} esenciales · ${v} muy importantes`:v?`${v} muy importantes`:'Sin referencias prioritarias';
+  }
+  function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
+
+  function init(){
+    if(!$('view-bibmap')) return;
+    ['bibMapSearch','bibMapTopic','bibMapStatus','bibMapImportance'].forEach(id=>{
+      $(id)?.addEventListener('input',renderMap);
+      $(id)?.addEventListener('change',renderMap);
+    });
+    $('goToLibraryBtn')?.addEventListener('click',()=>document.querySelector('[data-view="library"]')?.click());
+
+    const sourceList=$('sourceList');
+    if(sourceList){
+      new MutationObserver(()=>renderMap()).observe(sourceList,{childList:true,subtree:true,characterData:true});
+    }
+    renderMap();
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 })();
 </script>
 
