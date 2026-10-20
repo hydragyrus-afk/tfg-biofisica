@@ -570,7 +570,7 @@
         <div><div class="bib-title">${esc(r.title)}</div><div class="bib-author">${esc(r.author || 'Autoría no indicada')}</div></div>
         <div class="bib-topic-tag">${esc(r.topic)}</div>
         <div class="bib-status-tag ${r.status==='read'?'read':'pending'}">${r.status==='read'?'✓ Leído':'○ Pendiente'}</div>
-        <div class="bib-importance-tag ${r.importance}">${importanceLabel[r.importance]||'Importante'}</div>
+        <div class="bib-importance-tag ${r.importance}">${importanceLabel[r.importance]||'Básico'}</div>
       </div>`).join('') : '<div class="bib-empty">No hay referencias que coincidan con estos filtros.</div>';
   }
 
